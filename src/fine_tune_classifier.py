@@ -262,8 +262,9 @@ def train_setfit_model(
     from datasets import Dataset
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    logger.info("Initializing SetFit model (BAAI/bge-small-en-v1.5)...")
-    model = SetFitModel.from_pretrained("BAAI/bge-small-en-v1.5")
+    device_str = get_device("cuda")
+    logger.info(f"Initializing SetFit model (BAAI/bge-small-en-v1.5) on {device_str}...")
+    model = SetFitModel.from_pretrained("BAAI/bge-small-en-v1.5", device=device_str)
 
     train_ds = Dataset.from_dict({"text": train_texts, "label": train_labels})
     val_ds = Dataset.from_dict({"text": val_texts, "label": val_labels})
@@ -273,7 +274,7 @@ def train_setfit_model(
         batch_size=16,
         num_epochs=3,
         num_iterations=20,
-        evaluation_strategy="epoch",
+        eval_strategy="epoch",
         logging_dir=str(output_dir / "logs")
     )
 
