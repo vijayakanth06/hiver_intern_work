@@ -1,0 +1,59 @@
+# ==============================================================================
+# Brand Configuration: Uber_Support (Secondary Mobility & Logistics Brand)
+# ==============================================================================
+
+brand:
+  id: "uber_support"
+  name: "Uber_Support"
+  display_name: "Uber Support"
+  domain: "Ride-Hailing, Delivery & Logistics"
+  language: "en"
+  filter_non_english: true
+
+intents:
+  - id: "trip_fare_billing_dispute"
+    name: "Fare Review, Overcharge & Toll Disputes"
+    description: "Disputes regarding unexpected surge pricing, route inefficiency, incorrect toll charges, cleaning fees, or cancellation fee refunds."
+    keywords: ["fare", "charged", "overcharge", "cancellation fee", "toll", "route", "refund", "receipt", "surge", "expensive"]
+    auto_handle_eligible: true
+
+  - id: "lost_item_in_vehicle"
+    name: "Lost Item in Vehicle / Driver Contact"
+    description: "Customer left phone, wallet, keys, or baggage in an Uber vehicle and needs help contacting driver."
+    keywords: ["left", "lost", "wallet", "phone", "keys", "bag", "driver", "vehicle", "forgot", "back seat"]
+    auto_handle_eligible: true
+
+  - id: "driver_behavior_safety_incident"
+    name: "Driver Conduct, Safety & Vehicle Quality"
+    description: "Reports of dangerous driving, rude driver conduct, refusal of destination, vehicle not matching app details, or physical safety incidents."
+    keywords: ["unsafe", "rude", "dangerous", "accident", "police", "harassment", "car smell", "reckless", "threat", "refused"]
+    auto_handle_eligible: false  # Safety critical -> Immediate human escalation
+
+  - id: "eats_order_missing_damaged"
+    name: "Uber Eats Missing Items, Late Food & Wrong Order"
+    description: "Cold food, missing items from restaurant bag, order delivered to wrong address, food spills."
+    keywords: ["food", "eats", "missing", "cold", "spilled", "wrong item", "restaurant", "hungry", "delivery"]
+    auto_handle_eligible: true
+
+  - id: "account_promo_pass_inquiry"
+    name: "Uber One Membership, Promo Codes & Account Access"
+    description: "Promo code not applying, Uber One subscription renewals, phone number change, or disabled rider accounts."
+    keywords: ["promo", "discount", "code", "uber one", "pass", "phone number", "account", "login", "membership"]
+    auto_handle_eligible: true
+
+  - id: "general_feedback_escalation"
+    name: "Service Outrage & Legal/Executive Escalation"
+    description: "Extreme rider outrage, threats of legal action, BBB complaints, repeated unhelpful responses."
+    keywords: ["worst", "lawyer", "scam", "disgusting", "never using again", "manager", "unacceptable", "supervisor"]
+    auto_handle_eligible: false
+
+persona:
+  tone: "Prompt, empathetic, reassuring, direct and safety-conscious"
+  greeting: "Hi there,"
+  signoff: ""
+  dm_action_url: "https://help.uber.com"
+  escalation_message: "Your safety and experience are our top priorities. We are escalating this to our specialized Priority Support Team to review right away."
+
+sampling:
+  max_train_threads: 15000
+  golden_set_size: 50

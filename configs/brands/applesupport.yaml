@@ -1,0 +1,59 @@
+# ==============================================================================
+# Brand Configuration: AppleSupport (Secondary Hardware/OS Brand)
+# ==============================================================================
+
+brand:
+  id: "applesupport"
+  name: "AppleSupport"
+  display_name: "Apple Support"
+  domain: "Consumer Electronics & OS Ecosystem"
+  language: "en"
+  filter_non_english: true
+
+intents:
+  - id: "ios_macos_software_update"
+    name: "iOS/macOS Updates & Software Glitches"
+    description: "Issues installing iOS/macOS updates, app crashes, freezing screens, battery drain after updates, or Bluetooth/WiFi connectivity."
+    keywords: ["ios", "update", "macos", "battery", "drain", "crash", "freeze", "wifi", "bluetooth", "bug", "reboot"]
+    auto_handle_eligible: true
+
+  - id: "apple_id_icloud_security"
+    name: "Apple ID, iCloud Storage & Lockout"
+    description: "Forgotten Apple ID password, Activation Lock, two-factor authentication codes, iCloud storage full, or account recovery."
+    keywords: ["apple id", "icloud", "activation lock", "passcode", "password", "locked", "storage", "2fa", "recovery", "disabled"]
+    auto_handle_eligible: false  # Security sensitive
+
+  - id: "hardware_repair_battery_screen"
+    name: "Hardware Repairs, Genius Bar & Screen/Battery Replacement"
+    description: "Broken screens, swollen batteries, water damage, AppleCare warranty coverage claims, Genius Bar appointment bookings."
+    keywords: ["repair", "screen", "cracked", "battery replacement", "genius bar", "applecare", "appointment", "hardware", "water damage"]
+    auto_handle_eligible: true
+
+  - id: "subscriptions_billing_appstore"
+    name: "App Store Purchases, Subscriptions & Refunds"
+    description: "Accidental in-app purchases, recurring subscription cancellations, Apple Music charges, or request a refund on reportaproblem.apple.com."
+    keywords: ["subscription", "app store", "purchase", "charged", "refund", "in-app", "apple music", "receipt", "reportaproblem"]
+    auto_handle_eligible: true
+
+  - id: "device_setup_trade_in"
+    name: "New Device Setup, Data Migration & Trade-In"
+    description: "Transferring data from old iPhone to new iPhone, eSIM activation, Trade-in kit inquiries, delivery status of new hardware orders."
+    keywords: ["transfer", "setup", "trade in", "new iphone", "esim", "backup", "restore", "order status", "delivery"]
+    auto_handle_eligible: true
+
+  - id: "general_feedback_escalation"
+    name: "Severe Grievance, Store Feedback & Escalation"
+    description: "Frustrated customer complaints, negative retail Apple Store experiences, supervisor escalation requests."
+    keywords: ["terrible", "worst", "unacceptable", "manager", "store experience", "supervisor", "complaint", "refuse"]
+    auto_handle_eligible: false
+
+persona:
+  tone: "Calm, polite, technically knowledgeable, precise, and supportive"
+  greeting: "We're here to help."
+  signoff: ""
+  dm_action_url: "https://apple.co/support"
+  escalation_message: "We want to make sure your Apple device is working properly. Let's get you in touch with an Apple Specialist for one-on-one troubleshooting."
+
+sampling:
+  max_train_threads: 15000
+  golden_set_size: 50

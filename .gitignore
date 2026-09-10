@@ -1,0 +1,77 @@
+# ==============================================================================
+# Hiver AI Customer Support Agent — Git Ignore Rules
+# ==============================================================================
+
+# API Keys & Environment Variables (CRITICAL)
+.env
+.env.local
+.env.*.local
+
+# Large Raw Datasets (~500MB)
+data/raw/
+data/raw/*
+!data/raw/README.md
+
+# Intermediate Processed Thread Dumps (Regenerated via scripts)
+data/processed/
+data/processed/*
+
+# Large Binary Model Checkpoints & Adapters
+models/
+models/*
+*.pt
+*.bin
+*.safetensors
+*.onnx
+
+# Large Binary FAISS Vector Indices & BM25 Pickles (Regenerated via make index)
+indices/
+indices/*
+*.faiss
+*.pkl
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing & Linting
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.mypy_cache/
+.ruff_cache/
+
+# IDE & OS Specific
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs & Monitoring
+*.log
+logs/
+wandb/
+mlruns/

@@ -1,0 +1,65 @@
+# ==============================================================================
+# Brand Configuration: AmazonHelp (Primary Deep-Dive Brand)
+# ==============================================================================
+
+brand:
+  id: "amazonhelp"
+  name: "AmazonHelp"
+  display_name: "Amazon Customer Support"
+  domain: "E-Commerce & Digital Services"
+  language: "en"
+  filter_non_english: true
+
+intents:
+  - id: "order_tracking_delivery"
+    name: "Order Tracking & Delivery Status"
+    description: "Inquiries about late shipments, where is my order (WISMO), estimated arrival dates, missing delivery packages, carrier delays, or locker pickups."
+    keywords: ["track", "where", "package", "order", "delivery", "carrier", "late", "arrived", "delay", "ship", "locker", "driver"]
+    auto_handle_eligible: true
+
+  - id: "refund_return_cancellation"
+    name: "Returns, Refunds & Order Cancellation"
+    description: "Requests to return received items, issue full/partial refunds, cancel placed orders, return drop-off locations, or replace damaged goods."
+    keywords: ["refund", "return", "cancel", "money back", "replace", "damaged", "broken", "dropoff", "return label", "reimbursement"]
+    auto_handle_eligible: true
+
+  - id: "prime_subscription_billing"
+    name: "Prime Membership & Billing Inquiries"
+    description: "Questions regarding Prime trial charges, membership cancellations, annual renew fees, unrecognized credit card charges, or invoice discrepancies."
+    keywords: ["prime", "charged", "fee", "membership", "subscription", "annual", "renew", "bill", "payment method", "unauthorized charge"]
+    auto_handle_eligible: true
+
+  - id: "account_security_access"
+    name: "Account Access, OTP & Security"
+    description: "Locked accounts, password reset failures, two-factor OTP authentication issues, suspicious login alerts, hacked accounts."
+    keywords: ["locked", "password", "otp", "login", "hacked", "security", "unauthorized", "2fa", "verification", "access"]
+    auto_handle_eligible: false  # High security risk -> Escalate to human
+
+  - id: "digital_services_devices"
+    name: "Kindle, Fire TV, Echo & Digital Content"
+    description: "Troubleshooting Kindle e-readers, Fire TV sticks, Alexa/Echo smart speakers, Prime Video playback errors, or Amazon Music sync issues."
+    keywords: ["kindle", "fire tv", "alexa", "echo", "prime video", "music", "device", "app", "stream", "ebook"]
+    auto_handle_eligible: true
+
+  - id: "seller_product_inquiry"
+    name: "Third-Party Sellers, Stock & Product Details"
+    description: "Inquiries regarding Marketplace third-party sellers, product authenticity, warranties, out-of-stock items, or price matching."
+    keywords: ["seller", "third party", "marketplace", "stock", "warranty", "authentic", "counterfeit", "price match", "item details"]
+    auto_handle_eligible: true
+
+  - id: "general_feedback_complaint"
+    name: "General Grievance, CS Escalation & Feedback"
+    description: "Customer rage, severe service dissatisfaction, demands to speak with a supervisor, legal/regulatory threats, or positive agent praise."
+    keywords: ["worst", "terrible", "lawyer", "sue", "manager", "supervisor", "unacceptable", "scam", "disgusted", "great job", "thanks"]
+    auto_handle_eligible: false  # High risk sentiment -> Escalate to human
+
+persona:
+  tone: "Empathetic, clear, concise, professional and action-oriented"
+  greeting: "Hello! We'd love to help."
+  signoff: "^Agent"
+  dm_action_url: "https://amzn.to/help"
+  escalation_message: "I understand your concern and I want to make sure this gets resolved for you immediately. I am connecting you with an Amazon Customer Specialist who has access to your full account details."
+
+sampling:
+  max_train_threads: 25000
+  golden_set_size: 200
