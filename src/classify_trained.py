@@ -66,7 +66,7 @@ class TrainedIntentClassifier:
                 from peft import PeftModel
 
                 base_model_name = "microsoft/deberta-v3-small"
-                self.tokenizer = AutoTokenizer.from_pretrained(base_model_name)
+                self.tokenizer = AutoTokenizer.from_pretrained(base_model_name, use_fast=False)
 
                 # Check if LoRA adapter exists
                 adapter_config = self.model_dir / "adapter_config.json"

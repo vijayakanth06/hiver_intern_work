@@ -121,7 +121,7 @@ def train_deberta_lora(
     model_name = "microsoft/deberta-v3-small"
 
     logger.info(f"Loading tokenizer & base model {model_name} on {device}...")
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
     base_model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=n_classes)
 
     # Configure LoRA
