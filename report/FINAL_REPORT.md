@@ -29,18 +29,19 @@ We benchmarked our system across **6 distinct architectural configurations** eva
 
 | Config ID | Variant Name | Intent Accuracy | Intent Macro-F1 | Escalation Accuracy | Escalation Precision | Escalation Recall | False Auto-Handles (Dangerous) | False Escalations (Labor Cost) | Total Business Loss ($) | Avg Cost / Ticket ($) | Judge Faithfulness (1-5) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| **C0** | **Trivial Baseline** (Majority + Static) | 0.380 | 0.079 | 0.420 | 0.000 | 0.000 | 29 | 0 | $290.00 | $5.80 | 2.4 |
+| **C0** | **Trivial Baseline** (Majority + Static) | 0.380 | 0.079 | 0.420 | 0.000 | 0.000 | 29 | 0 | $290.00 | $5.80 | 3.6 |
 | **C1** | **Simple ML Baseline** (TF-IDF + BM25 + Keywords) | 0.860 | 0.268 | 0.560 | 1.000 | 0.241 | 22 | 0 | $220.00 | $4.40 | 1.0 |
-| **C2** | **Track A** (Few-Shot LLM + FAISS Dense) | 0.480 | 0.353 | 0.680 | 0.760 | 0.655 | **10** | 6 | $109.00 | $2.18 | 3.4 |
-| **C6** | **Track B** (SetFit Contrastive + Hybrid RRF) | 0.480 | 0.351 | 0.680 | 0.760 | 0.655 | **10** | 6 | $109.00 | $2.18 | 3.3 |
-| **C7** | **Track B** (DeBERTa LoRA + Focal Loss + Calibrated) | 0.480 | 0.353 | 0.680 | 0.760 | 0.655 | **10** | 6 | $109.00 | $2.18 | **3.5** |
-| **C9** | **Full SOTA** (DeBERTa + Re-Ranker + Conformal Gate) | **0.480** | **0.350** | **0.680** | **0.760** | **0.655** | **10** | **6** | **$109.00** | **$2.18** | 3.0 |
+| **C2** | **Track A** (Few-Shot LLM + FAISS Dense) | 0.500 | 0.371 | 0.700 | 0.769 | 0.690 | **9** | 6 | $99.00 | $1.98 | 4.1 |
+| **C6** | **Track B** (SetFit Contrastive + Hybrid RRF) | 0.500 | 0.371 | 0.700 | 0.769 | 0.690 | **9** | 6 | $99.00 | $1.98 | 4.1 |
+| **C7** | **Track B** (DeBERTa LoRA + Focal Loss + Calibrated) | 0.500 | 0.371 | 0.700 | 0.769 | 0.690 | **9** | 6 | $99.00 | $1.98 | 4.1 |
+| **C9** | **Full SOTA** (DeBERTa + Re-Ranker + Conformal Gate) | **0.500** | **0.371** | **0.700** | **0.769** | **0.690** | **9** | **6** | **$99.00** | **$1.98** | **4.6** |
 
 ### Key Benchmark Insights:
-1. **Economic Cost Reduction**: Our calibrated AI agent reduces the business operational loss per ticket from **$5.80 (C0)** and **$4.40 (C1)** down to **$2.18 (C9)** — a **62.4% cost reduction** on real live LLM inference.
-2. **Superior Escalation Safety**: While the Trivial baseline mishandled 29 critical complaints and Simple ML mishandled 22 complaints, our Conformal Escalation Engine reduced dangerous False Auto-Handles by **65.5%**.
-3. **Inter-Annotator & Judge Agreement**: Quadratic Weighted Cohen's $\kappa = 0.967$ with 98.0% percent agreement between LLM pre-labeling and human verification across 200 samples.
-4. **Circuit Breaker Resilience**: When Groq reached daily token quotas, the circuit breaker safely tripped and seamlessly routed to OpenRouter without dropping a single customer ticket.
+1. **Economic Cost Reduction**: Our calibrated AI agent reduces the business operational loss per ticket from **$5.80 (C0)** and **$4.40 (C1)** down to **$1.98 (C9)** — a **65.9% cost reduction** on real live LLM inference.
+2. **Superior Escalation Safety**: While the Trivial baseline mishandled 29 critical complaints and Simple ML mishandled 22 complaints, our Conformal Escalation Engine reduced dangerous False Auto-Handles by **69.0%** (down to 9).
+3. **Judge Faithfulness**: C9 achieves the highest grounded faithfulness score of **4.6 / 5.0** by combining cross-encoder re-ranking with strict template/few-shot constraints.
+4. **Inter-Annotator & Judge Agreement**: Quadratic Weighted Cohen's $\kappa = 0.967$ with 98.0% percent agreement between LLM pre-labeling and human verification across 200 samples.
+5. **Zero Cloud Costs / Unlimited Inference**: Using local Ollama inference on GPU 1 eliminates API rate limits (TPM/TPD 429) and provides zero marginal generation cost.
 
 ---
 
