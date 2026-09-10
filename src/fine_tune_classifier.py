@@ -221,7 +221,7 @@ def train_deberta_lora(
             logger.info(f" ⭐ New best model checkpoint saved with Macro-F1: {best_val_f1:.4f}")
 
             if target_names and len(target_names) == n_classes:
-                report_str = classification_report(val_targets_arr, val_preds, target_names=target_names, zero_division=0)
+                report_str = classification_report(val_targets_arr, val_preds, labels=list(range(n_classes)), target_names=target_names, zero_division=0)
                 logger.info(f"\nClassification Report (Epoch {epoch+1}):\n{report_str}")
         else:
             patience_counter += 1
