@@ -5,12 +5,16 @@ Combines base.yaml, brand configs, and .env environment variables.
 
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+import logging
 import yaml
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
 from src.schemas import IntentDefinition, BrandPersona
+
+# Silence noisy third-party loader logs
+for noisy_logger in ["faiss", "faiss.loader", "urllib3", "filelock", "huggingface_hub", "transformers"]:
+    logging.getLogger(noisy_logger).setLevel(logging.WARNING)
 
 # Load .env from project root
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
