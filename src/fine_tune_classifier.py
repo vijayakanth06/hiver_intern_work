@@ -40,8 +40,9 @@ class FocalLoss(nn.Module):
         self.weight = weight
 
     def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        logits = logits.float()  # Ensure float32 for numerical stability with fp16
         ce_loss = nn.functional.cross_entropy(logits, targets, weight=self.weight, reduction="none")
-        p_t = torch.exp(-ce_loss)
+        p_t = torch.exp(-ce_loss).clamp(min=1e-7, max=1.0)
         focal_loss = ((1.0 - p_t) ** self.gamma) * ce_loss
         return focal_loss.mean()
 
@@ -168,6 +169,7 @@ def train_deberta_lora(
             outputs = model(input_ids=input_ids, attention_mask=mask)
             loss = criterion(outputs.logits, labels)
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
             scheduler.step()
             total_loss += loss.item()
