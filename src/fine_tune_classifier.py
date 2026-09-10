@@ -123,15 +123,16 @@ def train_deberta_lora(
 
     logger.info(f"Loading tokenizer & base model {model_name} on {device}...")
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
-    base_model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=n_classes)
+    base_model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=n_classes).float()
 
-    # Configure LoRA
+    # Configure LoRA with classification head modules saved & trained
     peft_config = LoraConfig(
         task_type=TaskType.SEQ_CLS,
         r=8,
         lora_alpha=16,
         lora_dropout=0.1,
-        target_modules=["query_proj", "value_proj", "dense"]
+        target_modules=["query_proj", "value_proj"],
+        modules_to_save=["classifier", "pooler"]
     )
     model = get_peft_model(base_model, peft_config)
     model.to(device)
