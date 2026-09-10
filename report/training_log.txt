@@ -1,0 +1,108 @@
+2026-09-10 14:33:15,642 [INFO] Loaded 200 golden samples for @amazonhelp (Train: 150, Val: 50)
+2026-09-10 14:33:28,605 [INFO] Loading tokenizer & base model microsoft/deberta-v3-small on cuda (Float32 Precision)...
+2026-09-10 14:33:28,908 [INFO] HTTP Request: HEAD https://huggingface.co/microsoft/deberta-v3-small/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-09-10 14:33:28,909 [WARNING] Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-09-10 14:33:28,931 [INFO] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/microsoft/deberta-v3-small/a36c739020e01763fe789b4b85e2df55d6180012/config.json "HTTP/1.1 200 OK"
+2026-09-10 14:33:29,213 [INFO] HTTP Request: HEAD https://huggingface.co/microsoft/deberta-v3-small/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-10 14:33:29,235 [INFO] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/microsoft/deberta-v3-small/a36c739020e01763fe789b4b85e2df55d6180012/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-09-10 14:33:29,490 [INFO] HTTP Request: GET https://huggingface.co/api/models/microsoft/deberta-v3-small/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-09-10 14:33:29,737 [INFO] HTTP Request: GET https://huggingface.co/api/models/microsoft/deberta-v3-small/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-09-10 14:33:30,381 [INFO] HTTP Request: GET https://huggingface.co/api/models/microsoft/deberta-v3-small "HTTP/1.1 200 OK"
+2026-09-10 14:33:30,627 [INFO] HTTP Request: HEAD https://huggingface.co/microsoft/deberta-v3-small/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-10 14:33:30,649 [INFO] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/microsoft/deberta-v3-small/a36c739020e01763fe789b4b85e2df55d6180012/config.json "HTTP/1.1 200 OK"
+2026-09-10 14:33:30,936 [INFO] HTTP Request: HEAD https://huggingface.co/microsoft/deberta-v3-small/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-10 14:33:30,958 [INFO] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/microsoft/deberta-v3-small/a36c739020e01763fe789b4b85e2df55d6180012/config.json "HTTP/1.1 200 OK"
+2026-09-10 14:33:31,207 [INFO] HTTP Request: HEAD https://huggingface.co/microsoft/deberta-v3-small/resolve/main/model.safetensors "HTTP/1.1 404 Not Found"
+2026-09-10 14:33:31,447 [INFO] HTTP Request: GET https://huggingface.co/api/models/microsoft/deberta-v3-small "HTTP/1.1 200 OK"
+2026-09-10 14:33:31,702 [INFO] HTTP Request: GET https://huggingface.co/api/models/microsoft/deberta-v3-small/commits/main "HTTP/1.1 200 OK"
+Loading weights:   0%|          | 0/102 [00:00<?, ?it/s]Loading weights: 100%|██████████| 102/102 [00:00<00:00, 7354.38it/s]
+[transformers] [1mDebertaV2ForSequenceClassification LOAD REPORT[0m from: microsoft/deberta-v3-small
+Key                                     | Status     | 
+----------------------------------------+------------+-
+mask_predictions.dense.bias             | UNEXPECTED | 
+mask_predictions.classifier.bias        | UNEXPECTED | 
+lm_predictions.lm_head.dense.weight     | UNEXPECTED | 
+lm_predictions.lm_head.LayerNorm.weight | UNEXPECTED | 
+lm_predictions.lm_head.bias             | UNEXPECTED | 
+lm_predictions.lm_head.dense.bias       | UNEXPECTED | 
+mask_predictions.classifier.weight      | UNEXPECTED | 
+mask_predictions.LayerNorm.bias         | UNEXPECTED | 
+mask_predictions.LayerNorm.weight       | UNEXPECTED | 
+lm_predictions.lm_head.LayerNorm.bias   | UNEXPECTED | 
+mask_predictions.dense.weight           | UNEXPECTED | 
+classifier.weight                       | MISSING    | 
+classifier.bias                         | MISSING    | 
+pooler.dense.bias                       | MISSING    | 
+pooler.dense.weight                     | MISSING    | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+2026-09-10 14:33:31,970 [INFO] HTTP Request: GET https://huggingface.co/api/models/microsoft/deberta-v3-small/discussions?p=0 "HTTP/1.1 200 OK"
+2026-09-10 14:33:32,228 [INFO] HTTP Request: GET https://huggingface.co/api/models/microsoft/deberta-v3-small/commits/refs%2Fpr%2F4 "HTTP/1.1 200 OK"
+2026-09-10 14:33:32,471 [INFO] HTTP Request: HEAD https://huggingface.co/microsoft/deberta-v3-small/resolve/refs%2Fpr%2F4/model.safetensors.index.json "HTTP/1.1 404 Not Found"
+2026-09-10 14:33:32,717 [INFO] HTTP Request: HEAD https://huggingface.co/microsoft/deberta-v3-small/resolve/refs%2Fpr%2F4/model.safetensors "HTTP/1.1 302 Found"
+2026-09-10 14:33:33,057 [INFO] Starting DeBERTa LoRA training (10 epochs, batch_size=32, total_steps=50)...
+trainable params: 743,431 || all params: 142,643,726 || trainable%: 0.5212
+Epoch 1/10:   0%|          | 0/5 [00:00<?, ?it/s][transformers] `use_return_dict` is deprecated! Use `return_dict` instead!
+Epoch 1/10:  20%|██        | 1/5 [00:01<00:05,  1.40s/it]Epoch 1/10:  40%|████      | 2/5 [00:02<00:02,  1.07it/s]Epoch 1/10:  60%|██████    | 3/5 [00:02<00:01,  1.39it/s]Epoch 1/10:  80%|████████  | 4/5 [00:02<00:00,  1.60it/s]Epoch 1/10: 100%|██████████| 5/5 [00:03<00:00,  1.92it/s]Epoch 1/10: 100%|██████████| 5/5 [00:03<00:00,  1.52it/s]
+2026-09-10 14:33:36,707 [INFO] Epoch 1/10 - Train Loss: 1.5212 - Val Acc: 0.5200 - Val Macro-F1: 0.1368
+2026-09-10 14:33:36,963 [INFO] HTTP Request: HEAD https://huggingface.co/microsoft/deberta-v3-small/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-10 14:33:36,984 [INFO] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/microsoft/deberta-v3-small/a36c739020e01763fe789b4b85e2df55d6180012/config.json "HTTP/1.1 200 OK"
+2026-09-10 14:33:37,222 [INFO] HTTP Request: HEAD https://huggingface.co/microsoft/deberta-v3-small/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-10 14:33:37,241 [INFO] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/microsoft/deberta-v3-small/a36c739020e01763fe789b4b85e2df55d6180012/config.json "HTTP/1.1 200 OK"
+2026-09-10 14:33:37,398 [INFO]  ⭐ New best model checkpoint saved with Macro-F1: 0.1368
+2026-09-10 14:33:37,420 [INFO] 
+Classification Report (Epoch 1):
+                            precision    recall  f1-score   support
+
+   order_tracking_delivery       0.00      0.00      0.00        18
+refund_return_cancellation       0.00      0.00      0.00         2
+prime_subscription_billing       0.00      0.00      0.00         2
+   account_security_access       0.00      0.00      0.00         0
+  digital_services_devices       0.00      0.00      0.00         2
+    seller_product_inquiry       0.00      0.00      0.00         0
+general_feedback_complaint       0.52      1.00      0.68        26
+
+                  accuracy                           0.52        50
+                 macro avg       0.07      0.14      0.10        50
+              weighted avg       0.27      0.52      0.36        50
+
+Epoch 2/10:   0%|          | 0/5 [00:00<?, ?it/s]Epoch 2/10:  20%|██        | 1/5 [00:00<00:01,  2.26it/s]Epoch 2/10:  40%|████      | 2/5 [00:00<00:01,  2.17it/s]Epoch 2/10:  60%|██████    | 3/5 [00:01<00:00,  2.13it/s]Epoch 2/10:  80%|████████  | 4/5 [00:01<00:00,  2.11it/s]Epoch 2/10: 100%|██████████| 5/5 [00:02<00:00,  2.37it/s]Epoch 2/10: 100%|██████████| 5/5 [00:02<00:00,  2.27it/s]
+2026-09-10 14:33:39,995 [INFO] Epoch 2/10 - Train Loss: 0.7373 - Val Acc: 0.5200 - Val Macro-F1: 0.1368
+Epoch 3/10:   0%|          | 0/5 [00:00<?, ?it/s]Epoch 3/10:  20%|██        | 1/5 [00:00<00:01,  2.13it/s]Epoch 3/10:  40%|████      | 2/5 [00:00<00:01,  2.20it/s]Epoch 3/10:  60%|██████    | 3/5 [00:01<00:00,  2.16it/s]Epoch 3/10:  80%|████████  | 4/5 [00:01<00:00,  2.13it/s]Epoch 3/10: 100%|██████████| 5/5 [00:02<00:00,  2.41it/s]Epoch 3/10: 100%|██████████| 5/5 [00:02<00:00,  2.29it/s]
+2026-09-10 14:33:42,512 [INFO] Epoch 3/10 - Train Loss: 0.7521 - Val Acc: 0.5800 - Val Macro-F1: 0.2469
+2026-09-10 14:33:42,806 [INFO] HTTP Request: HEAD https://huggingface.co/microsoft/deberta-v3-small/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-10 14:33:42,830 [INFO] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/microsoft/deberta-v3-small/a36c739020e01763fe789b4b85e2df55d6180012/config.json "HTTP/1.1 200 OK"
+2026-09-10 14:33:43,067 [INFO] HTTP Request: HEAD https://huggingface.co/microsoft/deberta-v3-small/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-10 14:33:43,103 [INFO] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/microsoft/deberta-v3-small/a36c739020e01763fe789b4b85e2df55d6180012/config.json "HTTP/1.1 200 OK"
+2026-09-10 14:33:43,256 [INFO]  ⭐ New best model checkpoint saved with Macro-F1: 0.2469
+2026-09-10 14:33:43,277 [INFO] 
+Classification Report (Epoch 3):
+                            precision    recall  f1-score   support
+
+   order_tracking_delivery       0.47      0.89      0.62        18
+refund_return_cancellation       0.00      0.00      0.00         2
+prime_subscription_billing       0.00      0.00      0.00         2
+   account_security_access       0.00      0.00      0.00         0
+  digital_services_devices       0.00      0.00      0.00         2
+    seller_product_inquiry       0.00      0.00      0.00         0
+general_feedback_complaint       0.81      0.50      0.62        26
+
+                  accuracy                           0.58        50
+                 macro avg       0.18      0.20      0.18        50
+              weighted avg       0.59      0.58      0.54        50
+
+Epoch 4/10:   0%|          | 0/5 [00:00<?, ?it/s]Epoch 4/10:  20%|██        | 1/5 [00:00<00:01,  2.09it/s]Epoch 4/10:  40%|████      | 2/5 [00:00<00:01,  2.11it/s]Epoch 4/10:  60%|██████    | 3/5 [00:01<00:00,  2.11it/s]Epoch 4/10:  80%|████████  | 4/5 [00:01<00:00,  2.12it/s]Epoch 4/10: 100%|██████████| 5/5 [00:02<00:00,  2.42it/s]Epoch 4/10: 100%|██████████| 5/5 [00:02<00:00,  2.27it/s]
+2026-09-10 14:33:45,810 [INFO] Epoch 4/10 - Train Loss: 0.6882 - Val Acc: 0.5200 - Val Macro-F1: 0.1368
+Epoch 5/10:   0%|          | 0/5 [00:00<?, ?it/s]Epoch 5/10:  20%|██        | 1/5 [00:00<00:01,  2.19it/s]Epoch 5/10:  40%|████      | 2/5 [00:00<00:01,  2.20it/s]Epoch 5/10:  60%|██████    | 3/5 [00:01<00:00,  2.14it/s]Epoch 5/10:  80%|████████  | 4/5 [00:01<00:00,  2.13it/s]Epoch 5/10: 100%|██████████| 5/5 [00:02<00:00,  2.45it/s]Epoch 5/10: 100%|██████████| 5/5 [00:02<00:00,  2.31it/s]
+2026-09-10 14:33:48,326 [INFO] Epoch 5/10 - Train Loss: 0.6586 - Val Acc: 0.5200 - Val Macro-F1: 0.1368
+Epoch 6/10:   0%|          | 0/5 [00:00<?, ?it/s]Epoch 6/10:  20%|██        | 1/5 [00:00<00:01,  2.12it/s]Epoch 6/10:  40%|████      | 2/5 [00:00<00:01,  2.12it/s]Epoch 6/10:  60%|██████    | 3/5 [00:01<00:00,  2.10it/s]Epoch 6/10:  80%|████████  | 4/5 [00:01<00:00,  2.09it/s]Epoch 6/10: 100%|██████████| 5/5 [00:02<00:00,  2.35it/s]Epoch 6/10: 100%|██████████| 5/5 [00:02<00:00,  2.23it/s]
+2026-09-10 14:33:50,924 [INFO] Epoch 6/10 - Train Loss: 0.6389 - Val Acc: 0.5200 - Val Macro-F1: 0.1368
+Epoch 7/10:   0%|          | 0/5 [00:00<?, ?it/s]Epoch 7/10:  20%|██        | 1/5 [00:00<00:01,  2.15it/s]Epoch 7/10:  40%|████      | 2/5 [00:00<00:01,  2.14it/s]Epoch 7/10:  60%|██████    | 3/5 [00:01<00:00,  2.20it/s]Epoch 7/10:  80%|████████  | 4/5 [00:01<00:00,  2.17it/s]Epoch 7/10: 100%|██████████| 5/5 [00:02<00:00,  2.41it/s]Epoch 7/10: 100%|██████████| 5/5 [00:02<00:00,  2.29it/s]
+2026-09-10 14:33:53,453 [INFO] Epoch 7/10 - Train Loss: 0.6484 - Val Acc: 0.5200 - Val Macro-F1: 0.1368
+Epoch 8/10:   0%|          | 0/5 [00:00<?, ?it/s]Epoch 8/10:  20%|██        | 1/5 [00:00<00:01,  2.40it/s]Epoch 8/10:  40%|████      | 2/5 [00:00<00:01,  2.32it/s]Epoch 8/10:  60%|██████    | 3/5 [00:01<00:00,  2.21it/s]Epoch 8/10:  80%|████████  | 4/5 [00:01<00:00,  2.17it/s]Epoch 8/10: 100%|██████████| 5/5 [00:02<00:00,  2.43it/s]Epoch 8/10: 100%|██████████| 5/5 [00:02<00:00,  2.34it/s]
+2026-09-10 14:33:55,947 [INFO] Epoch 8/10 - Train Loss: 0.6493 - Val Acc: 0.5200 - Val Macro-F1: 0.1368
+2026-09-10 14:33:55,948 [INFO] Early stopping triggered at epoch 8 (patience=5). Preserving best checkpoint with Macro-F1: 0.2469
+2026-09-10 14:33:56,191 [INFO] Post-training calibration saved: T=1.301, Optimized Macro-F1=0.2469
