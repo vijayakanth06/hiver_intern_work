@@ -136,6 +136,8 @@ def train_deberta_lora(
     model.to(device)
     model.print_trainable_parameters()
 
+    from transformers import get_cosine_schedule_with_warmup
+
     train_ds = SupportIntentDataset(train_texts, train_labels, tokenizer)
     val_ds = SupportIntentDataset(val_texts, val_labels, tokenizer)
 
@@ -145,8 +147,14 @@ def train_deberta_lora(
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
     criterion = FocalLoss(gamma=2.0) if use_focal_loss else nn.CrossEntropyLoss()
 
+    total_steps = max(1, len(train_loader) * epochs)
+    warmup_steps = max(1, int(0.1 * total_steps))
+    scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=warmup_steps, num_training_steps=total_steps)
+
     best_val_f1 = 0.0
     best_logits = None
+    patience = 5
+    patience_counter = 0
 
     for epoch in range(epochs):
         model.train()
@@ -161,6 +169,7 @@ def train_deberta_lora(
             loss = criterion(outputs.logits, labels)
             loss.backward()
             optimizer.step()
+            scheduler.step()
             total_loss += loss.item()
 
         # Validation
@@ -184,13 +193,20 @@ def train_deberta_lora(
         macro_f1 = f1_score(val_targets_arr, val_preds, average="macro")
         acc = accuracy_score(val_targets_arr, val_preds)
 
-        logger.info(f"Epoch {epoch+1} - Loss: {total_loss/len(train_loader):.4f} - Val Acc: {acc:.4f} - Val Macro-F1: {macro_f1:.4f}")
+        logger.info(f"Epoch {epoch+1}/{epochs} - Loss: {total_loss/len(train_loader):.4f} - Val Acc: {acc:.4f} - Val Macro-F1: {macro_f1:.4f}")
 
         if macro_f1 > best_val_f1:
             best_val_f1 = macro_f1
             best_logits = val_logits_arr
+            patience_counter = 0
             model.save_pretrained(str(output_dir))
             tokenizer.save_pretrained(str(output_dir))
+            logger.info(f" ⭐ New best model checkpoint saved with Macro-F1: {best_val_f1:.4f}")
+        else:
+            patience_counter += 1
+            if patience_counter >= patience and epoch >= 6:
+                logger.info(f"Early stopping triggered at epoch {epoch+1} (patience={patience}). Preserving best checkpoint with Macro-F1: {best_val_f1:.4f}")
+                break
 
     # Temperature Scaling & Threshold Calibration
     if best_logits is not None:
