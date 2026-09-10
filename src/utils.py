@@ -121,3 +121,33 @@ def get_device(preferred: str = "auto") -> str:
         return "mps"
     return "cpu"
 
+
+def setup_clean_logging(level: int = 20) -> None:
+    """
+    Configures clean, structured logging and silences noisy third-party internal network/HF logs.
+    """
+    import os
+    import logging
+
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
+    os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
+    # Configure root logger
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%H:%M:%S",
+        force=True
+    )
+
+    # Silence noisy third-party network & framework loggers
+    noisy_loggers = [
+        "httpx", "httpcore", "urllib3", "huggingface_hub",
+        "transformers", "sentence_transformers", "peft",
+        "torch", "asyncio", "werkzeug", "absl", "tensorflow"
+    ]
+    for name in noisy_loggers:
+        logging.getLogger(name).setLevel(logging.WARNING)
+
+

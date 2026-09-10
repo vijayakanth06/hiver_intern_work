@@ -15,10 +15,11 @@ import pandas as pd
 from tqdm import tqdm
 
 from src.config import get_app_config, PROJECT_ROOT
-from src.utils import sanitize_pii, normalize_tweet_text, is_english_text
+from src.utils import sanitize_pii, normalize_tweet_text, is_english_text, setup_clean_logging
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+setup_clean_logging()
 logger = logging.getLogger("hiver.ingest")
+
 
 
 def reconstruct_threads_for_brand(

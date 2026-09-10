@@ -60,8 +60,12 @@ class UnifiedSupportAgent:
         model_dir = PROJECT_ROOT / "models" / brand_name.lower()
         if classifier_mode == "track_b_setfit":
             self.classifier_trained = TrainedIntentClassifier(model_dir / "setfit", self.brand_config, model_type="setfit")
-        else:
+            self.classifier_trained.load()
+        elif classifier_mode == "track_b_deberta":
             self.classifier_trained = TrainedIntentClassifier(model_dir / "deberta_lora", self.brand_config, model_type="deberta_lora")
+            self.classifier_trained.load()
+        else:
+            self.classifier_trained = None
 
         # Load indices if available
         index_dir = PROJECT_ROOT / "indices" / brand_name.lower()
@@ -71,7 +75,8 @@ class UnifiedSupportAgent:
             except Exception as e:
                 logger.warning(f"Could not load pre-built index: {e}")
 
-    def process(self, customer_query: str, turn_count: int = 1) -> UnifiedAgentOutput:
+
+    def process(self, customer_query: str, turn_count: int = 1, generate_reply: bool = True) -> UnifiedAgentOutput:
         """
         Executes end-to-end processing of a customer inquiry.
         """
@@ -110,12 +115,15 @@ class UnifiedSupportAgent:
         top_rag_sim = retrieved_contexts[0].similarity_score if retrieved_contexts else 0.50
 
         # Step 4: Draft Grounded Reply
-        reply_out = self.reply_generator.draft(
-            customer_query=customer_query,
-            predicted_intent=pred_intent,
-            retrieved_contexts=retrieved_contexts
-        )
-        draft_reply = reply_out.draft_reply
+        if generate_reply:
+            reply_out = self.reply_generator.draft(
+                customer_query=customer_query,
+                predicted_intent=pred_intent,
+                retrieved_contexts=retrieved_contexts
+            )
+            draft_reply = reply_out.draft_reply
+        else:
+            draft_reply = f"Official @{self.brand_name} resolution: Please DM us via {self.brand_config.persona.dm_action_url} for immediate assistance."
 
         # Step 5: Escalation Decision Engine
         esc_out = self.escalation_engine.evaluate(
@@ -125,6 +133,7 @@ class UnifiedSupportAgent:
             turn_count=turn_count,
             rag_similarity=top_rag_sim
         )
+
 
         elapsed_ms = (time.time() - start_time) * 1000.0
 
