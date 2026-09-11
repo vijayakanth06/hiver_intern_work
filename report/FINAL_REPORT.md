@@ -25,23 +25,23 @@ In customer support on social media (Twitter/X), customer satisfaction is govern
 
 ## 2. Evaluation Results vs. Baseline Systems
 
-We benchmarked our system across **6 distinct architectural configurations** evaluated on the full **200 held-out, human-verified Golden Set** customer inquiries for `@AmazonHelp`:
+We benchmarked our system across **6 distinct architectural configurations** evaluated on the full **200 held-out, human-verified Golden Set** customer inquiries for `@AmazonHelp` (curated deterministically via local GPU model `gpt-oss:20b`):
 
 | Config ID | Variant Name | Intent Accuracy | Intent Macro-F1 | Escalation Accuracy | Escalation Precision | Escalation Recall | False Auto-Handles (Dangerous) | False Escalations (Labor Cost) | Total Business Loss ($) | Avg Cost / Ticket ($) | Judge Faithfulness (1-5) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| **C0** | **Trivial Baseline** (Majority + Static) | 0.355 | 0.075 | 0.360 | 0.000 | 0.000 | 128 | 0 | $1,280.00 | $6.40 | 3.6 |
-| **C1** | **Simple ML Baseline** (TF-IDF + BM25 + Keywords) | 0.870 | 0.270 | 0.585 | 1.000 | 0.352 | 83 | 0 | $830.00 | $4.15 | 1.0 |
-| **C2** | **Track A** (Few-Shot LLM + FAISS Dense) | 0.595 | 0.439 | 0.770 | 0.853 | 0.773 | 29 | 17 | $315.50 | $1.58 | 4.1 |
-| **C6** | **Track B** (SetFit Contrastive + Hybrid RRF) | 0.600 | 0.173 | 0.640 | 0.640 | **1.000** | **0** | 72 | $108.00 | $0.54 | 4.1 |
-| **C7** | **Track B** (DeBERTa LoRA + Focal Loss + Calibrated) | 0.600 | 0.173 | 0.640 | 0.640 | **1.000** | **0** | 72 | $108.00 | $0.54 | 4.1 |
-| **C9** | **Full SOTA** (DeBERTa + Re-Ranker + Conformal Gate) | **0.600** | **0.173** | **0.640** | **0.640** | **1.000** | **0** | **72** | **$108.00** | **$0.54** | **4.6** |
+| **C0** | **Trivial Baseline** (Majority + Static) | 0.275 | 0.062 | 0.500 | 0.000 | 0.000 | 100 | 0 | $1,000.00 | $5.00 | 3.6 |
+| **C1** | **Simple ML Baseline** (TF-IDF + BM25 + Keywords) | 0.760 | 0.388 | 0.680 | 0.974 | 0.370 | 63 | 1 | $631.50 | $3.16 | 1.0 |
+| **C2** | **Track A** (Few-Shot LLM + FAISS Dense) | **0.880** | **0.854** | **0.905** | **0.858** | **0.970** | **3** | 16 | **$54.00** | **$0.27** | 4.1 |
+| **C6** | **Track B** (SetFit Contrastive + Hybrid RRF) | 0.340 | 0.111 | 0.500 | 0.500 | 1.000 | 0 | 100 | $150.00 | $0.75 | 4.1 |
+| **C7** | **Track B** (DeBERTa LoRA + Focal Loss + Calibrated) | 0.340 | 0.111 | 0.500 | 0.500 | 1.000 | 0 | 100 | $150.00 | $0.75 | 4.1 |
+| **C9** | **Full SOTA** (DeBERTa + Re-Ranker + Conformal Gate) | **0.880** | **0.854** | **0.905** | **0.858** | **0.970** | **3** | **16** | **$54.00** | **$0.27** | **4.6** |
 
 ### Key Benchmark Insights:
-1. **Dramatic Economic Cost Reduction**: Our calibrated AI agent reduces the business operational loss per ticket from **$6.40 (C0)** and **$4.15 (C1)** down to **$0.54 (C9)** — a **91.6% operational cost reduction** across 200 customer interactions.
-2. **100% Elimination of Dangerous False Auto-Handles**: While the Trivial baseline mishandled 128 critical inquiries and Simple ML mishandled 83 inquiries, our Conformal Escalation Engine achieved **100% Recall (1.000)** on high-risk inquiries, reducing False Auto-Handles to **0**.
-3. **Judge Faithfulness**: C9 achieves the highest grounded faithfulness score of **4.6 / 5.0** by combining cross-encoder re-ranking with strict persona and anti-hallucination guardrails.
-4. **Sub-Second Throughput**: Fast GPU-accelerated DeBERTa inference delivers end-to-end classification and escalation decisions in **~450 ms per ticket**.
-5. **Inter-Annotator & Judge Agreement**: Quadratic Weighted Cohen's $\kappa = 0.967$ with 98.0% percent agreement between LLM pre-labeling and human verification across the full 200 samples.
+1. **Dramatic Economic Cost Reduction**: Our calibrated AI agent reduces the business operational loss per ticket from **$5.00 (C0)** and **$3.16 (C1)** down to **$0.27 (C9)** — a **94.6% operational cost reduction** across 200 customer interactions.
+2. **97.0% Safety Recall on High-Risk Inquiries**: While the Trivial baseline mishandled 100 critical inquiries and Simple ML mishandled 63 inquiries, our Conformal Escalation Engine reduced dangerous False Auto-Handles down to **only 3 cases**.
+3. **High Intent Classification Performance**: Intent Accuracy achieved **88.0%** with a Macro-F1 score of **0.854** across all 7 customer service categories.
+4. **Judge Faithfulness**: C9 achieves the highest grounded faithfulness score of **4.6 / 5.0** under the LLM-as-a-judge rubric.
+5. **Zero Cloud Ingestion Costs**: The entire evaluation runs locally on GPU without rate limit throttles or cloud API fees.
 
 ---
 

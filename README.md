@@ -213,6 +213,15 @@ chmod +x run_pipeline.sh
 .\run_pipeline.ps1 -Brand amazonhelp
 ```
 
+### Interactive Live Demo & CLI
+```bash
+# Run 5 representative customer support scenarios
+python demo.py
+
+# Or launch interactive query console
+python demo.py --interactive
+```
+
 ### Makefile Workflow
 ```bash
 make setup                          # Verify environment & dependencies
@@ -223,6 +232,7 @@ make train BRAND=amazonhelp         # Fine-tune DeBERTa-v3 LoRA classifier
 make eval BRAND=amazonhelp          # Run 10-way systematic ablation study
 make test                           # Run complete pytest test suite
 ```
+
 
 ---
 

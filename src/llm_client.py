@@ -140,10 +140,13 @@ class LLMClient:
                                 {"role": "system", "content": system_prompt},
                                 {"role": "user", "content": user_prompt}
                             ],
-                            temperature=temperature,
+                            temperature=0.0,
+                            seed=42,
+                            extra_body={"options": {"seed": 42, "temperature": 0.0, "top_p": 0.9}},
                             max_retries=2
                         )
                         return result
+
                     except Exception as e:
                         logger.warning(f"Ollama attempt {attempt + 1} failed: {e}")
                         time.sleep(0.5 * (attempt + 1))
