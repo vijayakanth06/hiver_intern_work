@@ -24,7 +24,7 @@ class TrainedIntentClassifier:
         model_type: str = "deberta_lora",  # "deberta_lora" or "setfit"
         device: str = "cuda"
     ):
-        self.model_dir = model_dir
+        self.model_dir = Path(model_dir)
         self.brand_config = brand_config
         self.model_type = model_type
         self.device = device
@@ -43,12 +43,15 @@ class TrainedIntentClassifier:
 
         calib_path = self.model_dir / "calibration_params.json"
         if calib_path.exists():
-            with open(calib_path, "r", encoding="utf-8") as f:
-                params = json.load(f)
-                self.temperature = float(params.get("temperature", 1.0))
-                if "thresholds" in params:
-                    self.per_class_thresholds = np.array(params["thresholds"])
-            logger.info(f"Loaded calibration: T={self.temperature:.3f}, thresholds={self.per_class_thresholds}")
+            try:
+                with open(calib_path, "r", encoding="utf-8") as f:
+                    params = json.load(f)
+                    self.temperature = float(params.get("temperature", 1.0))
+                    if "thresholds" in params:
+                        self.per_class_thresholds = np.array(params["thresholds"])
+                logger.info(f"Loaded calibration: T={self.temperature:.3f}, thresholds={self.per_class_thresholds}")
+            except Exception as e:
+                logger.warning(f"Could not parse calibration_params.json: {e}")
 
         from src.utils import get_device
         dev = get_device(self.device)
@@ -65,19 +68,20 @@ class TrainedIntentClassifier:
                 from transformers import AutoTokenizer, AutoModelForSequenceClassification
                 from peft import PeftModel
 
-                base_model_name = "microsoft/deberta-v3-small"
-                self.tokenizer = AutoTokenizer.from_pretrained(base_model_name, use_fast=False)
+                tok_source = str(self.model_dir) if (self.model_dir / "tokenizer_config.json").exists() else "microsoft/deberta-v3-small"
+                self.tokenizer = AutoTokenizer.from_pretrained(tok_source, use_fast=False)
 
-                # Check if LoRA adapter exists
+                # Check if LoRA adapter exists vs full merged model
                 adapter_config = self.model_dir / "adapter_config.json"
                 if adapter_config.exists():
                     base_model = AutoModelForSequenceClassification.from_pretrained(
-                        base_model_name,
+                        "microsoft/deberta-v3-small",
                         num_labels=len(self.brand_config.intent_ids)
                     )
                     self.model = PeftModel.from_pretrained(base_model, str(self.model_dir)).to(dev)
                 else:
                     self.model = AutoModelForSequenceClassification.from_pretrained(str(self.model_dir)).to(dev)
+
                 self.model.eval()
                 logger.info(f"Loaded DeBERTa model from {self.model_dir} on {dev}")
             except Exception as e:
@@ -91,7 +95,6 @@ class TrainedIntentClassifier:
 
         # Fallback if model weights not loaded
         if self.model is None and self.setfit_model is None:
-            # Rule fallback
             return IntentClassificationOutput(
                 intent=self.brand_config.intent_ids[0],
                 confidence=0.5,
@@ -102,14 +105,21 @@ class TrainedIntentClassifier:
         if self.setfit_model is not None:
             # SetFit prediction
             probs = self.setfit_model.predict_proba([clean_q])[0]
+            if hasattr(probs, "cpu"):
+                probs = probs.cpu().numpy()
+            probs = np.array(probs)
             pred_idx = int(np.argmax(probs))
             conf = float(probs[pred_idx])
             pred_intent = self.id2label.get(pred_idx, self.brand_config.intent_ids[0])
+
+            secondary_indices = np.argsort(probs)[::-1][1:3]
+            secondary_intents = [self.id2label[i] for i in secondary_indices if probs[i] > 0.15]
+
             return IntentClassificationOutput(
                 intent=pred_intent,
                 confidence=conf,
                 reasoning=f"SetFit contrastive classification (P={conf:.3f}).",
-                secondary_intents=[]
+                secondary_intents=secondary_intents
             )
 
         # DeBERTa inference
@@ -117,7 +127,8 @@ class TrainedIntentClassifier:
         inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
 
         with torch.no_grad():
-            logits = self.model(**inputs).logits.cpu().numpy()[0]
+            outputs = self.model(**inputs)
+            logits = outputs.logits.cpu().numpy()[0]
 
         # Apply Temperature Scaling
         scaled_logits = logits / max(0.01, self.temperature)
@@ -144,3 +155,7 @@ class TrainedIntentClassifier:
             reasoning=f"Fine-tuned DeBERTa-v3 calibrated inference (T={self.temperature:.2f}, P={conf:.3f}).",
             secondary_intents=secondary_intents
         )
+
+    def classify(self, query: str) -> IntentClassificationOutput:
+        """Alias for predict method."""
+        return self.predict(query)

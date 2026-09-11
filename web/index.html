@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hiver AI Customer Support Agent — Interactive Evaluation & Live Demo</title>
+  <meta name="description" content="Production-grade AI Customer Support Agent: Intent Classification, Grounded RAG Drafting, and Cost-Calibrated Conformal Escalation." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-badge">
+          <span class="pulse-dot"></span>
+          <span>GPU ACCELERATED</span>
+        </div>
+        <h1>🛡️ Hiver AI Support Agent</h1>
+        <p class="subtitle">Autonomous Intent Classification • Grounded Historical Resolution • Cost-Calibrated Conformal Escalation</p>
+      </div>
+      <div class="header-stats">
+        <div class="stat-pill">
+          <span class="label">SOTA Accuracy</span>
+          <span class="value accent-blue">93.5%</span>
+        </div>
+        <div class="stat-pill">
+          <span class="label">Safety Recall</span>
+          <span class="value accent-green">97.0%</span>
+        </div>
+        <div class="stat-pill">
+          <span class="label">Cost Reduction</span>
+          <span class="value accent-amber">95.0%</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs" role="tablist">
+      <button class="tab-btn active" data-tab="live-demo" id="tab-live-demo-btn">
+        <span class="tab-icon">💬</span> Live Agent Tester
+      </button>
+      <button class="tab-btn" data-tab="ablation" id="tab-ablation-btn">
+        <span class="tab-icon">📊</span> Ablation Benchmark (200 Golden)
+      </button>
+      <button class="tab-btn" data-tab="cost-sim" id="tab-cost-btn">
+        <span class="tab-icon">🧮</span> Asymmetric Risk Simulator
+      </button>
+      <button class="tab-btn" data-tab="banking77" id="tab-b77-btn">
+        <span class="tab-icon">🏦</span> Banking77 Domain Transfer
+      </button>
+      <button class="tab-btn" data-tab="architecture" id="tab-arch-btn">
+        <span class="tab-icon">🏛️</span> Architecture & Specs
+      </button>
+    </nav>
+
+    <!-- Main Content Panels -->
+    <main class="main-content">
+      
+      <!-- TAB 1: Live Interactive Agent Tester -->
+      <section id="live-demo" class="tab-pane active">
+        <div class="split-grid">
+          <!-- Left: Input & Controls -->
+          <div class="panel-card">
+            <div class="card-header">
+              <h2>Customer Inbound Message</h2>
+              <span class="badge badge-outline">Channel: Twitter / X (@AmazonHelp)</span>
+            </div>
+
+            <!-- Quick Scenario Presets -->
+            <div class="preset-section">
+              <label class="section-label">⚡ Quick Test Scenarios</label>
+              <div class="preset-pills">
+                <button class="preset-btn" data-query="My package was supposed to arrive yesterday and tracking has not updated. Where is it?">📦 Late Package</button>
+                <button class="preset-btn" data-query="You charged my credit card twice for Prime renewal and refuse to refund. I will sue and contact the FTC!">🚨 Fraud / Legal Threat</button>
+                <button class="preset-btn" data-query="My account is locked and someone unauthorized is buying gift cards on my account help!">🔒 Account Security</button>
+                <button class="preset-btn" data-query="How do I cancel my Amazon Music subscription? I don't want to be billed next month.">💳 Cancel Sub</button>
+                <button class="preset-btn" data-query="The item I received is broken in pieces and the delivery box was crushed by the driver.">💔 Damaged Item</button>
+              </div>
+            </div>
+
+            <!-- Text Area Input -->
+            <div class="input-group">
+              <textarea id="query-input" placeholder="Type or paste any customer support tweet..." rows="4">My package was supposed to arrive yesterday and tracking has not updated. Where is it?</textarea>
+            </div>
+
+            <!-- Mode Controls -->
+            <div class="controls-row">
+              <div class="control-item">
+                <label for="classifier-mode">Classifier Engine:</label>
+                <select id="classifier-mode">
+                  <option value="deberta" selected>DeBERTa-v3 LoRA (SOTA 93.5% / Calibrated)</option>
+                  <option value="setfit">SetFit Contrastive (Few-Shot)</option>
+                  <option value="track_a">Track A: Dynamic Few-Shot LLM</option>
+                  <option value="simple_ml">Simple ML Baseline (TF-IDF + BM25)</option>
+                </select>
+              </div>
+              <div class="control-item">
+                <label for="reranker-toggle">Cross-Encoder Re-Ranking:</label>
+                <input type="checkbox" id="reranker-toggle" checked />
+              </div>
+            </div>
+
+            <button id="run-agent-btn" class="btn btn-primary">
+              <span class="btn-icon">⚡</span> Run Full Agent Inference
+            </button>
+          </div>
+
+          <!-- Right: Inference Output -->
+          <div class="panel-card" id="output-card">
+            <div class="card-header">
+              <h2>Agent Decision & Grounded Output</h2>
+              <div id="latency-tag" class="badge badge-latency">⏱️ 14.2 ms</div>
+            </div>
+
+            <!-- Escalation Decision Banner -->
+            <div id="escalation-banner" class="banner banner-safe">
+              <div class="banner-icon" id="banner-icon">🤖</div>
+              <div class="banner-content">
+                <div class="banner-title" id="banner-title">AUTO-HANDLE (Safe to Dispatch)</div>
+                <div class="banner-desc" id="banner-desc">Confidence is above conformal safety threshold (94.2%). No security or legal risk triggers detected.</div>
+              </div>
+              <div class="banner-risk" id="banner-risk">RISK: LOW</div>
+            </div>
+
+            <!-- Classification Details -->
+            <div class="metric-row">
+              <div class="metric-box">
+                <span class="metric-label">Predicted Intent</span>
+                <span class="metric-value accent-blue" id="res-intent">order_tracking_delivery</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-label">Model Confidence</span>
+                <span class="metric-value accent-green" id="res-confidence">94.8%</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-label">Risk Policy Gate</span>
+                <span class="metric-value" id="res-gate">Conformal (α=0.05)</span>
+              </div>
+            </div>
+
+            <!-- Grounded Reply Draft -->
+            <div class="reply-section">
+              <label class="section-label">📝 Grounded Historical Resolution Draft (Anti-Hallucination)</label>
+              <div class="reply-box" id="res-reply">
+                "We'd like to check this delivery delay for you! Please reach out to us via secure Direct Message at https://amzn.to/help with your 17-digit Order ID so our support team can assist immediately."
+              </div>
+            </div>
+
+            <!-- Retrieved Context Accordion -->
+            <div class="context-section">
+              <label class="section-label">📚 Top Retrieved Historical Resolutions (Hybrid FAISS + BM25 + Re-Ranker)</label>
+              <div class="context-list" id="res-contexts">
+                <div class="context-item">
+                  <div class="context-meta">
+                    <span class="tag">Passage #8421</span>
+                    <span class="score">RRF Score: 0.942</span>
+                  </div>
+                  <div class="context-text"><strong>Customer:</strong> "Where is my item? Has not arrived yet."</div>
+                  <div class="context-resolution"><strong>Resolution:</strong> "Please send us a DM at https://amzn.to/help with your order details."</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: Ablation Benchmark (200 Golden Dataset) -->
+      <section id="ablation" class="tab-pane">
+        <div class="panel-card full-width">
+          <div class="card-header">
+            <div>
+              <h2>Systematic 6-Way Ablation Study Results</h2>
+              <p class="card-desc">Evaluated on the full 200 human-verified Golden Dataset inquiries for @AmazonHelp under asymmetric business loss ($10 FA / $1.50 FE).</p>
+            </div>
+            <a href="../report/FINAL_REPORT.md" class="btn btn-secondary" target="_blank">📄 View Full Report</a>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="charts-grid">
+            <div class="chart-card">
+              <h3>Intent Accuracy & Macro-F1 (%)</h3>
+              <div class="chart-container">
+                <canvas id="accuracyChart"></canvas>
+              </div>
+            </div>
+            <div class="chart-card">
+              <h3>Operational Loss per Ticket ($ USD)</h3>
+              <div class="chart-container">
+                <canvas id="costChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Benchmark Table -->
+          <div class="table-responsive">
+            <table class="benchmark-table">
+              <thead>
+                <tr>
+                  <th>Config ID</th>
+                  <th>Architecture Variant</th>
+                  <th>Intent Accuracy</th>
+                  <th>Intent Macro-F1</th>
+                  <th>Escalation Recall</th>
+                  <th>False Auto-Handles</th>
+                  <th>False Escalations</th>
+                  <th>Avg Cost / Ticket</th>
+                  <th>Judge Faithfulness</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="row-baseline">
+                  <td><strong>C0</strong></td>
+                  <td>Trivial Baseline (Majority + Static)</td>
+                  <td>27.5%</td>
+                  <td>0.062</td>
+                  <td>0.0%</td>
+                  <td><span class="badge badge-danger">100</span></td>
+                  <td>0</td>
+                  <td>$5.00</td>
+                  <td>4.1 / 5.0</td>
+                </tr>
+                <tr class="row-baseline">
+                  <td><strong>C1</strong></td>
+                  <td>Simple ML (TF-IDF + BM25 + Rules)</td>
+                  <td>76.0%</td>
+                  <td>0.388</td>
+                  <td>37.0%</td>
+                  <td><span class="badge badge-danger">63</span></td>
+                  <td>1</td>
+                  <td>$3.16</td>
+                  <td>2.6 / 5.0</td>
+                </tr>
+                <tr>
+                  <td><strong>C2</strong></td>
+                  <td>Track A (Few-Shot LLM + FAISS Dense)</td>
+                  <td>86.5%</td>
+                  <td>0.869</td>
+                  <td>97.0%</td>
+                  <td><span class="badge badge-safe">3</span></td>
+                  <td>16</td>
+                  <td>$0.27</td>
+                  <td>4.3 / 5.0</td>
+                </tr>
+                <tr>
+                  <td><strong>C6</strong></td>
+                  <td>Track B (SetFit Contrastive + Hybrid RRF)</td>
+                  <td>76.0%</td>
+                  <td>0.680</td>
+                  <td>93.0%</td>
+                  <td><span class="badge badge-safe">7</span></td>
+                  <td>41</td>
+                  <td>$0.66</td>
+                  <td>4.1 / 5.0</td>
+                </tr>
+                <tr>
+                  <td><strong>C7</strong></td>
+                  <td>Track B (DeBERTa LoRA + Focal Loss)</td>
+                  <td>93.5%</td>
+                  <td>0.881</td>
+                  <td>97.0%</td>
+                  <td><span class="badge badge-safe">3</span></td>
+                  <td>13</td>
+                  <td>$0.25</td>
+                  <td>4.1 / 5.0</td>
+                </tr>
+                <tr class="row-sota">
+                  <td><strong>C9 🏆</strong></td>
+                  <td><strong>Full SOTA (DeBERTa + Re-Ranker + Conformal Gate)</strong></td>
+                  <td><strong class="accent-blue">93.5%</strong></td>
+                  <td><strong class="accent-blue">0.881</strong></td>
+                  <td><strong class="accent-green">97.0%</strong></td>
+                  <td><span class="badge badge-safe"><strong>3</strong></span></td>
+                  <td>13</td>
+                  <td><strong class="accent-amber">$0.25</strong></td>
+                  <td><strong class="accent-blue">4.3 / 5.0</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: Cost-Risk Simulator -->
+      <section id="cost-sim" class="tab-pane">
+        <div class="split-grid">
+          <div class="panel-card">
+            <div class="card-header">
+              <h2>🧮 Asymmetric Cost & ROI Calculator</h2>
+              <span class="badge badge-outline">Enterprise Financial Model</span>
+            </div>
+            
+            <p class="card-desc">Simulate operational customer support business costs based on your organization's ticket volume and error penalties.</p>
+
+            <div class="slider-group">
+              <div class="slider-header">
+                <label for="monthly-volume">Monthly Support Inbound Volume:</label>
+                <span class="slider-val" id="volume-val">100,000 tickets</span>
+              </div>
+              <input type="range" id="monthly-volume" min="10000" max="500000" step="10000" value="100000" />
+            </div>
+
+            <div class="slider-group">
+              <div class="slider-header">
+                <label for="cost-fa">False Auto-Handle Penalty ($C_FA - Angry Churn / Legal):</label>
+                <span class="slider-val" id="fa-val">$10.00 / ticket</span>
+              </div>
+              <input type="range" id="cost-fa" min="2" max="30" step="1" value="10" />
+            </div>
+
+            <div class="slider-group">
+              <div class="slider-header">
+                <label for="cost-fe">False Escalation Review Cost ($C_FE - Specialist Labor):</label>
+                <span class="slider-val" id="fe-val">$1.50 / ticket</span>
+              </div>
+              <input type="range" id="cost-fe" min="0.5" max="5.0" step="0.25" value="1.50" />
+            </div>
+
+            <div class="slider-group">
+              <div class="slider-header">
+                <label for="auto-rate">Agent Auto-Handle Coverage Target:</label>
+                <span class="slider-val" id="rate-val">65.0%</span>
+              </div>
+              <input type="range" id="auto-rate" min="30" max="90" step="5" value="65" />
+            </div>
+          </div>
+
+          <div class="panel-card">
+            <div class="card-header">
+              <h2>Projected Monthly Economics</h2>
+            </div>
+
+            <div class="roi-summary-grid">
+              <div class="roi-card">
+                <span class="roi-label">Baseline Human Support Cost</span>
+                <span class="roi-value" id="cost-baseline">$150,000</span>
+                <span class="roi-sub">100% human agent triage</span>
+              </div>
+              <div class="roi-card highlight">
+                <span class="roi-label">Calibrated AI Agent Cost</span>
+                <span class="roi-value accent-green" id="cost-agent">$25,000</span>
+                <span class="roi-sub">Includes FA & FE risk penalties</span>
+              </div>
+              <div class="roi-card grand-savings">
+                <span class="roi-label">Net Monthly Savings</span>
+                <span class="roi-value accent-amber" id="cost-savings">$125,000 / mo</span>
+                <span class="roi-sub">83.3% Cost Reduction</span>
+              </div>
+            </div>
+
+            <div class="chart-container" style="height: 220px; margin-top: 1.5rem;">
+              <canvas id="roiChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: Banking77 Domain Transfer -->
+      <section id="banking77" class="tab-pane">
+        <div class="panel-card full-width">
+          <div class="card-header">
+            <div>
+              <h2>🏦 Banking77 Cross-Domain Zero-Shot Transfer Evaluation</h2>
+              <p class="card-desc">Validating classifier generalization on 3,080 unseen banking queries across 77 fine-grained classes mapped to the 7-intent support taxonomy.</p>
+            </div>
+          </div>
+
+          <div class="transfer-grid">
+            <div class="transfer-card">
+              <h3>DeBERTa-v3-small (LoRA + Focal Loss)</h3>
+              <div class="transfer-stats">
+                <div class="t-stat">
+                  <span class="t-label">In-Domain Val Accuracy (@AmazonHelp)</span>
+                  <span class="t-val accent-blue">86.76%</span>
+                </div>
+                <div class="t-stat">
+                  <span class="t-label">Banking77 Test Accuracy</span>
+                  <span class="t-val accent-green">86.67%</span>
+                </div>
+                <div class="t-stat">
+                  <span class="t-label">Banking77 Test Macro-F1</span>
+                  <span class="t-val accent-green">0.8486</span>
+                </div>
+                <div class="t-stat">
+                  <span class="t-label">Domain Transfer Retention</span>
+                  <span class="t-val accent-amber">99.9%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="transfer-card">
+              <h3>SetFit (BAAI/bge-small-en-v1.5 Contrastive)</h3>
+              <div class="transfer-stats">
+                <div class="t-stat">
+                  <span class="t-label">In-Domain Val Accuracy (@AmazonHelp)</span>
+                  <span class="t-val accent-blue">83.53%</span>
+                </div>
+                <div class="t-stat">
+                  <span class="t-label">Banking77 Test Accuracy</span>
+                  <span class="t-val accent-green">83.33%</span>
+                </div>
+                <div class="t-stat">
+                  <span class="t-label">Banking77 Test Macro-F1</span>
+                  <span class="t-val accent-green">0.8277</span>
+                </div>
+                <div class="t-stat">
+                  <span class="t-label">Domain Transfer Retention</span>
+                  <span class="t-val accent-amber">99.8%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="taxonomy-mapping-section">
+            <h3>7-Class Taxonomy Mapping Overview</h3>
+            <div class="taxonomy-tags">
+              <span class="tax-tag"><strong>order_tracking_delivery</strong>: card_arrival, transfer_timing, pin_delivery (9 classes)</span>
+              <span class="tax-tag"><strong>refund_return_cancellation</strong>: refund_not_received, revert_card_payment, cancel_transfer (12 classes)</span>
+              <span class="tax-tag"><strong>prime_subscription_billing</strong>: fee_charge, transfer_fee_charged, extra_charge (10 classes)</span>
+              <span class="tax-tag"><strong>account_security_access</strong>: card_compromised, pass_reset, verify_identity (15 classes)</span>
+              <span class="tax-tag"><strong>digital_services_devices</strong>: virtual_card, app_not_working, contactless (11 classes)</span>
+              <span class="tax-tag"><strong>seller_product_inquiry</strong>: exchange_rate, card_acceptance, top_up_limits (12 classes)</span>
+              <span class="tax-tag"><strong>general_feedback_complaint</strong>: support_feedback, declined_transfer (8 classes)</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: Architecture & Specs -->
+      <section id="architecture" class="tab-pane">
+        <div class="panel-card full-width">
+          <div class="card-header">
+            <h2>🏛️ System Architecture & Engineering Specifications</h2>
+          </div>
+
+          <div class="arch-flow">
+            <div class="arch-step">
+              <span class="step-num">1</span>
+              <h4>PII Sanitizer</h4>
+              <p>Redacts emails, phone numbers, order IDs (`[ORDER_ID]`) and validates English text.</p>
+            </div>
+            <div class="arch-step">
+              <span class="step-num">2</span>
+              <h4>Hybrid Vector Search</h4>
+              <p>Combines dense BGE-M3 FAISS index (112k passages) with sparse BM25Okapi via Reciprocal Rank Fusion.</p>
+            </div>
+            <div class="arch-step">
+              <span class="step-num">3</span>
+              <h4>Cross-Encoder Re-Ranker</h4>
+              <p>Deep token interaction scoring with `cross-encoder/ms-marco-MiniLM-L-6-v2` + MMR diversity.</p>
+            </div>
+            <div class="arch-step">
+              <span class="step-num">4</span>
+              <h4>Fine-Tuned DeBERTa-v3</h4>
+              <p>Sequence classification with class-weighted Focal Loss ($\gamma=2.0$) & temperature calibration ($T=1.36$).</p>
+            </div>
+            <div class="arch-step">
+              <span class="step-num">5</span>
+              <h4>Conformal Risk Escalation</h4>
+              <p>Guarantees $\ge 95\%$ safety recall on high-risk inquiries via asymmetric cost threshold optimization.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

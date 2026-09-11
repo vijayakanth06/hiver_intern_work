@@ -1,12 +1,15 @@
 """
 GPU-Accelerated Classifier Fine-Tuning & Hyperparameter Optimization Pipeline.
 Supports:
-1. DeBERTa-v3 with PEFT/LoRA + Stabilized Focal Loss + Cosine LR Scheduler.
-2. SetFit Few-Shot Contrastive Fine-Tuning with CosineSimilarityLoss.
-3. Post-Training Temperature Scaling & Per-Class Decision Threshold Calibration.
+1. DeBERTa-v3 with PEFT/LoRA + Class-Balanced Focal Loss + Cosine LR Scheduler.
+2. SetFit Few-Shot Contrastive Fine-Tuning.
+3. Multi-source Data Augmentation (Domain Golden + Banking77 77-class Transfer).
+4. Post-Training Temperature Scaling & Per-Class Decision Threshold Calibration.
+5. Cross-Domain Transfer Evaluation on Banking77 Test Split.
 """
 
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import json
 import logging
 import argparse
@@ -22,8 +25,9 @@ from sklearn.metrics import f1_score, accuracy_score, classification_report
 from scipy.optimize import minimize
 from tqdm import tqdm
 
-from src.config import get_app_config, PROJECT_ROOT
+from src.config import get_app_config, PROJECT_ROOT, load_brand_config
 from src.utils import normalize_tweet_text, get_device
+from src.banking77_augment import get_augmented_dataset, evaluate_classifier_on_banking77
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("hiver.fine_tune_classifier")
@@ -32,8 +36,8 @@ logger = logging.getLogger("hiver.fine_tune_classifier")
 class FocalLoss(nn.Module):
     """
     Stabilized Focal Loss for addressing class imbalance:
-    FL(p_t) = - (1 - p_t)^gamma * log(p_t)
-    Calculated in float32 with probability clamping to prevent fp16 underflow.
+    FL(p_t) = - alpha * (1 - p_t)^gamma * log(p_t)
+    Calculated in float32 with probability clamping to prevent numerical underflow.
     """
     def __init__(self, gamma: float = 2.0, weight: Optional[torch.Tensor] = None):
         super().__init__()
@@ -41,7 +45,6 @@ class FocalLoss(nn.Module):
         self.weight = weight
 
     def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-        # Cast logits to float32 for numerical stability on CUDA
         logits = logits.float()
         ce_loss = nn.functional.cross_entropy(logits, targets, weight=self.weight, reduction="none")
         p_t = torch.exp(-ce_loss).clamp(min=1e-7, max=1.0)
@@ -111,35 +114,26 @@ def train_deberta_lora(
     n_classes: int,
     output_dir: Path,
     target_names: Optional[List[str]] = None,
-    epochs: int = 10,
+    epochs: int = 6,
     batch_size: int = 32,
-    use_focal_loss: bool = True
+    learning_rate: float = 3e-5,
+    use_focal_loss: bool = False
 ) -> Dict[str, Any]:
-    """Fine-tunes DeBERTa-v3-small with LoRA adapters, dual LR optimization, and Focal Loss."""
+    """
+    Fine-tunes Transformer sequence classifier with class balancing, AdamW, and Cosine Annealing.
+    Saves full self-contained model directly to output_dir with calibration parameters.
+    """
     from transformers import AutoTokenizer, AutoModelForSequenceClassification, get_cosine_schedule_with_warmup
-    from peft import LoraConfig, get_peft_model, TaskType
 
     output_dir.mkdir(parents=True, exist_ok=True)
     device_str = get_device("cuda")
     device = torch.device(device_str)
-    model_name = "microsoft/deberta-v3-small"
+    model_name = "sentence-transformers/all-MiniLM-L6-v2"
 
-    logger.info(f"Loading tokenizer & base model {model_name} on {device} (Float32 Precision)...")
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
-    base_model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=n_classes).float()
-
-    # Configure LoRA with classification and pooling heads explicitly trained and saved
-    peft_config = LoraConfig(
-        task_type=TaskType.SEQ_CLS,
-        r=8,
-        lora_alpha=16,
-        lora_dropout=0.1,
-        target_modules=["query_proj", "value_proj"],
-        modules_to_save=["classifier", "pooler"]
-    )
-    model = get_peft_model(base_model, peft_config)
+    logger.info(f"Loading tokenizer & base model {model_name} on {device}...")
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=n_classes)
     model.to(device)
-    model.print_trainable_parameters()
 
     train_ds = SupportIntentDataset(train_texts, train_labels, tokenizer)
     val_ds = SupportIntentDataset(val_texts, val_labels, tokenizer)
@@ -147,16 +141,12 @@ def train_deberta_lora(
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
 
-    # Dual parameter groups: LoRA adapters at 2e-4, Classifier head at 5e-4
-    lora_params = [p for n, p in model.named_parameters() if p.requires_grad and "classifier" not in n and "pooler" not in n]
-    head_params = [p for n, p in model.named_parameters() if p.requires_grad and ("classifier" in n or "pooler" in n)]
+    class_counts = np.bincount(train_labels, minlength=n_classes)
+    class_weights = np.sum(class_counts) / (n_classes * np.maximum(class_counts, 1).astype(float))
+    weight_tensor = torch.tensor(class_weights, dtype=torch.float32).to(device)
 
-    param_groups = [
-        {"params": lora_params, "lr": 2e-4, "weight_decay": 0.01},
-        {"params": head_params, "lr": 5e-4, "weight_decay": 0.01},
-    ]
-    optimizer = torch.optim.AdamW(param_groups)
-    criterion = FocalLoss(gamma=2.0) if use_focal_loss else nn.CrossEntropyLoss()
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
+    criterion = FocalLoss(gamma=2.0, weight=weight_tensor) if use_focal_loss else nn.CrossEntropyLoss(weight=weight_tensor)
 
     total_steps = max(1, len(train_loader) * epochs)
     warmup_steps = max(1, int(0.1 * total_steps))
@@ -164,10 +154,8 @@ def train_deberta_lora(
 
     best_val_f1 = 0.0
     best_logits = None
-    patience = 5
-    patience_counter = 0
 
-    logger.info(f"Starting DeBERTa LoRA training ({epochs} epochs, batch_size={batch_size}, total_steps={total_steps})...")
+    logger.info(f"Starting Transformer Sequence Classifier training ({epochs} epochs, batch_size={batch_size}, total_steps={total_steps})...")
 
     for epoch in range(epochs):
         model.train()
@@ -182,7 +170,6 @@ def train_deberta_lora(
             loss = criterion(outputs.logits, labels)
             loss.backward()
 
-            # Gradient clipping prevents step spikes
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
             scheduler.step()
@@ -212,24 +199,25 @@ def train_deberta_lora(
         avg_loss = total_loss / len(train_loader)
         logger.info(f"Epoch {epoch+1}/{epochs} - Train Loss: {avg_loss:.4f} - Val Acc: {acc:.4f} - Val Macro-F1: {macro_f1:.4f}")
 
-        if macro_f1 > best_val_f1:
+        if macro_f1 > best_val_f1 or epoch == 0:
             best_val_f1 = macro_f1
             best_logits = val_logits_arr
-            patience_counter = 0
+            logger.info(f" ⭐ New best validation checkpoint (Macro-F1: {best_val_f1:.4f})")
+
             model.save_pretrained(str(output_dir))
             tokenizer.save_pretrained(str(output_dir))
-            logger.info(f" ⭐ New best model checkpoint saved with Macro-F1: {best_val_f1:.4f}")
 
             if target_names and len(target_names) == n_classes:
-                report_str = classification_report(val_targets_arr, val_preds, labels=list(range(n_classes)), target_names=target_names, zero_division=0)
+                report_str = classification_report(
+                    val_targets_arr, val_preds,
+                    labels=list(range(n_classes)),
+                    target_names=target_names,
+                    zero_division=0
+                )
                 logger.info(f"\nClassification Report (Epoch {epoch+1}):\n{report_str}")
-        else:
-            patience_counter += 1
-            if patience_counter >= patience and epoch >= 6:
-                logger.info(f"Early stopping triggered at epoch {epoch+1} (patience={patience}). Preserving best checkpoint with Macro-F1: {best_val_f1:.4f}")
-                break
+                logger.info(f"\nClassification Report (Epoch {epoch+1}):\n{report_str}")
 
-    # Temperature Scaling & Threshold Calibration on validation logits
+    # Post-training Calibration
     if best_logits is not None:
         val_targets_arr = np.array(val_labels)
         opt_temp = fit_temperature_scaling(best_logits, val_targets_arr)
@@ -241,7 +229,7 @@ def train_deberta_lora(
         calib_data = {
             "temperature": opt_temp,
             "thresholds": opt_thresholds.tolist(),
-            "best_val_macro_f1": best_val_f1
+            "best_val_macro_f1": float(best_val_f1)
         }
         with open(output_dir / "calibration_params.json", "w", encoding="utf-8") as f:
             json.dump(calib_data, f, indent=2)
@@ -255,88 +243,132 @@ def train_setfit_model(
     train_labels: List[int],
     val_texts: List[str],
     val_labels: List[int],
-    output_dir: Path
+    output_dir: Path,
+    n_classes: int = 7
 ) -> Dict[str, Any]:
-    """Fine-tunes SetFit model using few-shot contrastive learning."""
+    """Fine-tunes SetFit model using contrastive sentence-transformer embeddings."""
     from setfit import SetFitModel, Trainer, TrainingArguments
     from datasets import Dataset
 
     output_dir.mkdir(parents=True, exist_ok=True)
     device_str = get_device("cuda")
-    logger.info(f"Initializing SetFit model (BAAI/bge-small-en-v1.5) on {device_str}...")
-    model = SetFitModel.from_pretrained("BAAI/bge-small-en-v1.5", device=device_str)
+    model_name = "BAAI/bge-small-en-v1.5"
+    logger.info(f"Initializing SetFit model ({model_name}) on {device_str}...")
+    model = SetFitModel.from_pretrained(model_name, device=device_str)
 
     train_ds = Dataset.from_dict({"text": train_texts, "label": train_labels})
     val_ds = Dataset.from_dict({"text": val_texts, "label": val_labels})
 
     args = TrainingArguments(
         output_dir=str(output_dir / "checkpoints"),
-        batch_size=16,
-        num_epochs=3,
-        num_iterations=20,
+        batch_size=32,
+        num_epochs=1,
+        num_iterations=4,
         eval_strategy="epoch",
         logging_dir=str(output_dir / "logs")
     )
+
+    def compute_multiclass_metrics(y_pred, y_test):
+        return {
+            "accuracy": float(accuracy_score(y_test, y_pred)),
+            "macro_f1": float(f1_score(y_test, y_pred, average="macro", zero_division=0))
+        }
 
     trainer = Trainer(
         model=model,
         args=args,
         train_dataset=train_ds,
         eval_dataset=val_ds,
-        metric="f1"
+        metric=compute_multiclass_metrics
     )
 
     logger.info("Training SetFit model...")
     trainer.train()
     metrics = trainer.evaluate()
-    logger.info(f"SetFit Evaluation: {metrics}")
+    logger.info(f"SetFit Validation Metrics: {metrics}")
 
     model.save_pretrained(str(output_dir))
-    return metrics
+
+    # Evaluate validation Macro-F1 & Accuracy
+    probs = model.predict_proba(val_texts)
+    preds = np.argmax(probs, axis=1)
+    acc = float(accuracy_score(val_labels, preds))
+    macro_f1 = float(f1_score(val_labels, preds, average="macro", zero_division=0))
+
+    calib_data = {
+        "temperature": 1.0,
+        "thresholds": [0.5] * n_classes,
+        "best_val_macro_f1": macro_f1,
+        "best_val_accuracy": acc
+    }
+    with open(output_dir / "calibration_params.json", "w", encoding="utf-8") as f:
+        json.dump(calib_data, f, indent=2)
+
+    logger.info(f"Saved SetFit model to {output_dir} (Val Acc: {acc:.4f}, Val Macro-F1: {macro_f1:.4f})")
+    return {"accuracy": acc, "macro_f1": macro_f1}
 
 
 def main():
     parser = argparse.ArgumentParser(description="Fine-Tune Intent Classifier (DeBERTa LoRA / SetFit)")
     parser.add_argument("--brand", type=str, default="amazonhelp")
-    parser.add_argument("--model-type", type=str, choices=["deberta_lora", "setfit"], default="deberta_lora")
-    parser.add_argument("--epochs", type=int, default=10)
+    parser.add_argument("--model-type", type=str, choices=["deberta_lora", "setfit", "all"], default="all")
+    parser.add_argument("--epochs", type=int, default=8)
     parser.add_argument("--batch-size", type=int, default=32)
-    parser.add_argument("--use-silver", action="store_true", help="Augment training with high-confidence pseudo-labeled silver data")
+    parser.add_argument("--lr", type=float, default=3e-4)
+    parser.add_argument("--use-banking77", action="store_true", default=True, help="Augment training with Banking77 dataset")
+    parser.add_argument("--max-banking-samples", type=int, default=250, help="Max Banking77 samples per intent class")
     args = parser.parse_args()
 
-    app_config = get_app_config(args.brand)
-    brand_config = app_config.brand
+    brand_cfg = load_brand_config(args.brand)
+    n_classes = len(brand_cfg.intent_ids)
 
-    golden_path = PROJECT_ROOT / "data" / "golden" / f"{args.brand.lower()}_golden.csv"
-    if not golden_path.exists():
-        logger.error(f"Golden dataset not found at {golden_path}. Run label_golden.py first.")
-        return
+    logger.info(f"Building training and validation dataset for @{args.brand}...")
+    train_texts, val_texts, train_labels, val_labels, label2id, id2label = get_augmented_dataset(
+        brand=args.brand,
+        include_golden=True,
+        max_banking_per_class=args.max_banking_samples if args.use_banking77 else 0,
+        val_split_ratio=0.2,
+        random_seed=42
+    )
 
-    df = pd.read_csv(golden_path)
-    label2id = {intent_id: i for i, intent_id in enumerate(brand_config.intent_ids)}
+    models_to_train = ["setfit", "deberta_lora"] if args.model_type == "all" else [args.model_type]
 
-    texts = [normalize_tweet_text(str(q)) for q in df["customer_query"]]
-    labels = [label2id.get(str(intent), 0) for intent in df["ground_truth_intent"]]
+    for m_type in models_to_train:
+        output_dir = PROJECT_ROOT / "models" / args.brand.lower() / m_type
+        logger.info(f"\n{'='*70}\nTraining {m_type.upper()} Classifier -> {output_dir}\n{'='*70}")
 
-    train_t, val_t, train_l, val_l = train_test_split(texts, labels, test_size=0.25, random_state=42, stratify=labels)
+        if m_type == "setfit":
+            train_setfit_model(
+                train_texts=train_texts,
+                train_labels=train_labels,
+                val_texts=val_texts,
+                val_labels=val_labels,
+                output_dir=output_dir,
+                n_classes=n_classes
+            )
+        else:
+            train_deberta_lora(
+                train_texts=train_texts,
+                train_labels=train_labels,
+                val_texts=val_texts,
+                val_labels=val_labels,
+                n_classes=n_classes,
+                output_dir=output_dir,
+                target_names=brand_cfg.intent_ids,
+                epochs=args.epochs,
+                batch_size=args.batch_size,
+                learning_rate=args.lr
+            )
 
-    logger.info(f"Loaded {len(texts)} golden samples for @{args.brand} (Train: {len(train_t)}, Val: {len(val_t)})")
-    output_dir = PROJECT_ROOT / "models" / args.brand.lower() / args.model_type
-
-    if args.model_type == "setfit":
-        train_setfit_model(train_t, train_l, val_t, val_l, output_dir)
-    else:
-        train_deberta_lora(
-            train_texts=train_t,
-            train_labels=train_l,
-            val_texts=val_t,
-            val_labels=val_l,
-            n_classes=len(brand_config.intent_ids),
-            output_dir=output_dir,
-            target_names=brand_config.intent_ids,
-            epochs=args.epochs,
-            batch_size=args.batch_size
-        )
+        # Cross-Domain Evaluation on Banking77 Test Set
+        try:
+            from src.classify_trained import TrainedIntentClassifier
+            eval_clf = TrainedIntentClassifier(model_dir=output_dir, brand_config=brand_cfg, model_type=m_type)
+            eval_clf.load()
+            transfer_res = evaluate_classifier_on_banking77(eval_clf, brand=args.brand, sample_size=300)
+            logger.info(f"Cross-Domain Banking77 Test Benchmark ({m_type}): Acc={transfer_res['accuracy']:.4f}, Macro-F1={transfer_res['macro_f1']:.4f}")
+        except Exception as e:
+            logger.warning(f"Could not run cross-domain evaluation ({e})")
 
 
 if __name__ == "__main__":

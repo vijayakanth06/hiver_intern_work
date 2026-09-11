@@ -5,7 +5,7 @@
 PYTHON ?= $(shell which python3 2>/dev/null || which python 2>/dev/null || echo python)
 BRAND ?= amazonhelp
 
-.PHONY: help setup ingest golden index train eval test run clean
+.PHONY: help setup ingest golden index train eval test ui viz run clean
 
 help:
 	@echo "Available commands:"
@@ -16,6 +16,8 @@ help:
 	@echo "  make train      - Fine-tune DeBERTa LoRA & calibrate classifier"
 	@echo "  make eval       - Run 10-way systematic ablation benchmark"
 	@echo "  make test       - Run test suite with pytest"
+	@echo "  make ui         - Launch interactive web dashboard & demo (http://localhost:8000)"
+	@echo "  make viz        - Regenerate high-resolution evaluation charts"
 	@echo "  make run        - Execute full end-to-end pipeline (<15 min)"
 	@echo "  make clean      - Clean cache and temporary files"
 

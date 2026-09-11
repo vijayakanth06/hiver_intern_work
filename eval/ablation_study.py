@@ -1,30 +1,22 @@
 """
-Systematic 10-Way Ablation Benchmark Suite.
-Rigorously evaluates every configuration variant on the verified Golden Set:
-- Intent Classification Macro-F1 & Accuracy
-- Retrieval Hit@3 & MRR
-- Response Faithfulness & Brand Tone (LLM Judge)
-- Escalation Accuracy, Precision, Recall, and Total Business Cost ($C_FA vs $C_FE)
-Outputs results to report/ablation_results.csv and prints clean formatted comparison tables.
+Systematic 10-Way Ablation Benchmark Engine.
+Evaluates Trivial Baseline, Simple ML, Track A (LLM Few-Shot), Track B (SetFit/DeBERTa), and SOTA.
+Computes classification metrics, cost-weighted escalation matrix ($10 FA / $1.50 FE), and grounding quality.
 """
 
-import os
 import time
-import json
 import logging
 import argparse
 from pathlib import Path
-from typing import List, Dict, Any, Tuple
-import pandas as pd
+from typing import Dict, List, Any
 import numpy as np
+import pandas as pd
 from tabulate import tabulate
 
-from src.utils import setup_clean_logging, get_device
 from src.config import get_app_config, PROJECT_ROOT
-from src.schemas import UnifiedAgentOutput, RAGContextItem
-from baselines.trivial_baseline import TrivialBaselineAgent
-from baselines.simple_baseline import SimpleMLBaselineAgent
 from src.agent import UnifiedSupportAgent
+from src.utils import get_device, setup_clean_logging
+from baselines import TrivialBaselineAgent, SimpleMLBaselineAgent
 from eval.metrics import compute_classification_metrics, compute_escalation_metrics
 from eval.judge import LLMSupportJudge
 
@@ -65,6 +57,7 @@ def run_ablation_benchmark(brand_name: str = "amazonhelp", sample_size: int = 50
     simple_agent.fit(queries, y_true_intent, queries, [f"Standard resolution for @{brand_name}" for _ in queries])
 
     agent_track_a = UnifiedSupportAgent(brand_name=brand_name, classifier_mode="track_a", use_reranker=False)
+    agent_setfit = UnifiedSupportAgent(brand_name=brand_name, classifier_mode="track_b_setfit", use_reranker=False)
     agent_deberta = UnifiedSupportAgent(brand_name=brand_name, classifier_mode="track_b_deberta", use_reranker=False)
     agent_sota = UnifiedSupportAgent(brand_name=brand_name, classifier_mode="track_b_deberta", use_reranker=True)
 
@@ -90,6 +83,7 @@ def run_ablation_benchmark(brand_name: str = "amazonhelp", sample_size: int = 50
         pred_intents = []
         pred_escs = []
         draft_replies = []
+        contexts_list = []
         latencies = []
 
         for i, q in enumerate(queries):
@@ -99,23 +93,20 @@ def run_ablation_benchmark(brand_name: str = "amazonhelp", sample_size: int = 50
             elif cfg_type == "simple_ml":
                 out = simple_agent.process(q)
             elif cfg_type == "track_a":
-                # For Track A LLM in high-sample mode, run classification on queries
-                if i < 25 or n_samples <= 50:
-                    out = agent_track_a.process(q, generate_reply=False)
-                else:
-                    out = agent_track_a.process(q, generate_reply=False)
+                out = agent_track_a.process(q, generate_reply=(i < 5))
             elif cfg_type == "setfit":
-                out = agent_deberta.process(q, generate_reply=False)
+                out = agent_setfit.process(q, generate_reply=(i < 5))
             elif cfg_type == "deberta":
-                out = agent_deberta.process(q, generate_reply=False)
+                out = agent_deberta.process(q, generate_reply=(i < 5))
             elif cfg_type == "sota":
-                out = agent_sota.process(q, generate_reply=False)
+                out = agent_sota.process(q, generate_reply=(i < 5))
             else:
                 out = trivial_agent.process(q)
 
             pred_intents.append(out.predicted_intent)
             pred_escs.append(out.should_escalate)
             draft_replies.append(out.draft_reply)
+            contexts_list.append(out.retrieved_context)
             latencies.append((time.time() - start_q) * 1000.0)
 
         elapsed_sec = time.time() - t0
@@ -125,16 +116,19 @@ def run_ablation_benchmark(brand_name: str = "amazonhelp", sample_size: int = 50
         # Compute escalation metrics & business cost ($10 FA, $1.50 FE)
         esc_metrics = compute_escalation_metrics(y_true_esc, pred_escs, cost_fa=10.0, cost_fe=1.50)
 
-        # Representative Grounding Faithfulness scoring
-        faithfulness_map = {
-            "C0": 3.6,
-            "C1": 1.0,
-            "C2": 4.1,
-            "C6": 4.1,
-            "C7": 4.1,
-            "C9": 4.6
-        }
-        avg_faithfulness = faithfulness_map.get(cfg_id, 4.0)
+        # Compute LLM Judge faithfulness across evaluated samples
+        faithfulness_scores = []
+        for j in range(min(5, len(draft_replies))):
+            if draft_replies[j]:
+                j_eval = judge.evaluate_response(
+                    brand_name=brand_name,
+                    customer_query=queries[j],
+                    draft_reply=draft_replies[j],
+                    retrieved_contexts=contexts_list[j]
+                )
+                faithfulness_scores.append(j_eval.grounding_faithfulness)
+
+        avg_faithfulness = float(np.mean(faithfulness_scores)) if faithfulness_scores else 4.0
 
         record = {
             "Config_ID": cfg_id,
@@ -153,7 +147,7 @@ def run_ablation_benchmark(brand_name: str = "amazonhelp", sample_size: int = 50
         }
         results.append(record)
 
-        print(f"[{idx}/6] Evaluated {cfg_id} ({cfg_name[:35]:<35}) | Acc: {cls_metrics['accuracy']:.1%} | Cost: ${esc_metrics['average_cost_per_ticket']:.2f}/tkt | Time: {elapsed_sec:.2f}s")
+        print(f"[{idx}/6] Evaluated {cfg_id} ({cfg_name[:35]:<35}) | Acc: {cls_metrics['accuracy']:.1%} | F1: {cls_metrics['macro_f1']:.3f} | Cost: ${esc_metrics['average_cost_per_ticket']:.2f}/tkt | Time: {elapsed_sec:.2f}s")
 
     df_results = pd.DataFrame(results)
 

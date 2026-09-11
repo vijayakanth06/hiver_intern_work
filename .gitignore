@@ -16,7 +16,13 @@ data/raw/*
 data/processed/
 data/processed/*
 
-# Large Binary Model Checkpoints & Adapters
+# Golden Labeled Datasets (Tracked)
+!data/golden/
+!data/golden/*
+!data/prelabeled/
+!data/prelabeled/*
+
+# Large Binary Model Checkpoints & Adapters (Trained on-demand in <2 min)
 models/
 models/*
 *.pt
@@ -24,7 +30,7 @@ models/*
 *.safetensors
 *.onnx
 
-# Large Binary FAISS Vector Indices & BM25 Pickles (Regenerated via make index)
+# Binary FAISS Vector Indices & BM25 Pickles (Regenerated via make index)
 indices/
 indices/*
 *.faiss
